@@ -262,6 +262,14 @@ select option{background:var(--surface2)}
 .img-drop-hint{font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--mono)}
 .img-preview{max-width:100%;max-height:120px;border-radius:5px;border:1px solid var(--border2);margin-top:8px;display:none}
 
+/* Code output blocks */
+.code-out{margin-top:14px}
+.code-block-out{background:var(--bg,#080a0f);border:1px solid var(--border,#232840);border-radius:6px;padding:14px 16px;margin:8px 0;overflow-x:auto}
+.code-block-lang{font-family:var(--mono);font-size:9px;color:var(--text3,#5a6180);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.code-block-out pre{font-family:var(--mono);font-size:11px;line-height:1.7;color:#a8c4e0;white-space:pre;margin:0}
+.code-section-label{font-family:var(--mono);font-size:9px;color:var(--accent3,#3dd68c);letter-spacing:.12em;text-transform:uppercase;margin:14px 0 6px;border-top:1px solid var(--border,#232840);padding-top:10px}
+.code-prose{font-size:12px;line-height:1.7;color:var(--text2,#9ba3bf);white-space:pre-wrap;margin-top:6px}
+
 /* Scrollbars */
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
 
@@ -313,6 +321,9 @@ select option{background:var(--surface2)}
       </div>
       <div class="nav-item" data-step="4" onclick="formGoTo(4)">
         <div class="nav-dot"></div><span class="nav-title">Cost & Deploy</span><span class="nav-check" id="nc4"></span>
+      </div>
+      <div class="nav-item" data-step="5" onclick="formGoTo(5)">
+        <div class="nav-dot"></div><span class="nav-title">Build Pipeline</span><span class="nav-check" id="nc5"></span>
       </div>
     </div>
 
@@ -505,11 +516,62 @@ select option{background:var(--surface2)}
           <button class="gen-btn" id="gb4" onclick="formGenerate(4)"><span>✦</span>Generate Deployment Plan</button>
           <div id="fo-4"></div>
         </div>
+
+        <!-- Step 5 -->
+        <div class="step-section" id="fs-5">
+          <div class="fs-title">Build Pipeline</div>
+          <div class="fs-sub">Generate runnable training code for your multimodal model.</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <label>Base Model</label>
+          <select id="f-base-model">
+            <option value="qwen2_vl_7b">Qwen2-VL 7B — strong vision-language, great for VQA tasks</option>
+            <option value="internvl2_8b">InternVL2 8B — top open-source VLM benchmark scores</option>
+            <option value="llava_next_7b">LLaVA-NeXT 7B — well-documented, wide community support</option>
+            <option value="paligemma_3b">PaliGemma 3B — lightweight, fast, Google-backed</option>
+            <option value="phi3_vision">Phi-3.5 Vision — small, edge-capable, 4.2B params</option>
+            <option value="clip_yolo">CLIP + YOLOv8 — two-stage hybrid (fast detector gates VLM)</option>
+            <option value="moondream2">Moondream2 — 1.9B ultra-lightweight for edge deployment</option>
+          </select>
+          <label>Training Framework</label>
+          <div class="chip-row" id="f-framework-chips">
+            <div class="chip" data-val="unsloth">Unsloth (fastest LoRA)</div>
+            <div class="chip" data-val="huggingface">HuggingFace Transformers</div>
+            <div class="chip" data-val="axolotl">Axolotl</div>
+            <div class="chip" data-val="pytorch">Raw PyTorch</div>
+          </div>
+          <label>Fine-tuning Method</label>
+          <div class="chip-row" id="f-finetune-chips">
+            <div class="chip" data-val="qlora">QLoRA — 4-bit, minimal VRAM</div>
+            <div class="chip" data-val="lora">LoRA — 16-bit, faster convergence</div>
+            <div class="chip" data-val="full">Full fine-tune</div>
+            <div class="chip" data-val="prompt_only">Prompt-only / zero-shot</div>
+          </div>
+          <label>Target Hardware</label>
+          <select id="f-hardware">
+            <option value="a100_80gb">A100 80GB (recommended for 7B+ models)</option>
+            <option value="a100_40gb">A100 40GB</option>
+            <option value="h100_80gb">H100 80GB (fastest)</option>
+            <option value="a10g_24gb">A10G 24GB (RunPod / Lambda)</option>
+            <option value="rtx4090_24gb">RTX 4090 24GB (local)</option>
+            <option value="t4_16gb">T4 16GB (Colab / budget cloud)</option>
+            <option value="mac_cpu">Mac CPU — no GPU (use QLoRA + float32)</option>
+          </select>
+          <label>Dataset Format Output</label>
+          <div class="chip-row" id="f-dataset-chips">
+            <div class="chip" data-val="jsonl">JSONL (universal)</div>
+            <div class="chip" data-val="sharegpt">ShareGPT format</div>
+            <div class="chip" data-val="hf_dataset">HuggingFace Dataset</div>
+          </div>
+          <label>Additional requirements</label>
+          <textarea id="f-pipeline-notes" placeholder="e.g. Must run on RunPod, need W&B logging, streaming inference required, target latency under 200ms…"></textarea>
+          <button class="gen-btn" id="gb5" onclick="formGenerate(5)"><span>✦</span>Generate Training Code</button>
+          <div id="fo-5"></div>
+        </div>
       </div>
 
       <div class="form-bottom">
         <button class="fbtn fbtn-ghost" id="f-prev" onclick="formPrev()" style="visibility:hidden">← Back</button>
-        <span id="f-counter" style="font-family:var(--mono);font-size:11px;color:var(--text3)">Step 1 of 5</span>
+        <span id="f-counter" style="font-family:var(--mono);font-size:11px;color:var(--text3)">Step 1 of 6</span>
         <button class="fbtn fbtn-primary" id="f-next" onclick="formNext()">Next →</button>
       </div>
     </div>
@@ -569,6 +631,7 @@ select option{background:var(--surface2)}
         <span class="rp-tag tag-pend" id="rpt-2">Arch</span>
         <span class="rp-tag tag-pend" id="rpt-3">Train</span>
         <span class="rp-tag tag-pend" id="rpt-4">Deploy</span>
+        <span class="rp-tag tag-pend" id="rpt-5">Code</span>
       </div>
     </div>
   </aside>
@@ -686,7 +749,7 @@ async function sendMessage() {
 
   const systemPrompt = `You are an expert ML engineer conducting a structured interview to build a complete vision AI model specification. 
 
-Your job: ask focused follow-up questions one or two at a time, extract the key information needed for a spec (domain, detection target, output type, edge cases, data situation, latency needs, false positive tolerance), and once you have enough context, generate a structured spec section.
+Your job: ask focused follow-up questions one or two at a time, extract the key information needed for a spec (domain, detection target, output type, edge cases, data situation, latency needs, false positive tolerance), and once you have enough context, generate a structured spec section. After completing all spec sections, offer to generate a full multimodal training pipeline — asking for base model preference, framework (Unsloth/HuggingFace/Axolotl), fine-tuning method (QLoRA/LoRA/full), and target hardware before generating complete Python training code.
 
 When you have enough information for a section, output it clearly labeled like:
 SPEC: [section name]
@@ -834,13 +897,13 @@ function formGoTo(s) {
     else { document.getElementById(`nc${i}`).textContent=''; }
     if (i === s) el.classList.add('active');
   });
-  document.getElementById('f-counter').textContent = `Step ${s+1} of 5`;
+  document.getElementById('f-counter').textContent = `Step ${s+1} of 6`;
   document.getElementById('f-prev').style.visibility = s===0?'hidden':'visible';
-  document.getElementById('f-next').textContent = s===4 ? 'Export PDF ↗' : 'Next →';
+  document.getElementById('f-next').textContent = s===5 ? 'Export PDF ↗' : 'Next →';
   if (s === 4) calcCost();
   updateRightPanel();
 }
-function formNext() { if (formStep < 4) formGoTo(formStep+1); else exportPdf(); }
+function formNext() { if (formStep < 5) formGoTo(formStep+1); else exportPdf(); }
 function formPrev() { if (formStep > 0) formGoTo(formStep-1); }
 
 async function formGenerate(step) {
@@ -864,6 +927,75 @@ async function formGenerate(step) {
   const deploy = document.getElementById('f-deploy')?.value || '';
   const human = [...(chipSelections['f-human-chips']||[])].join(', ');
   const imgs = document.getElementById('c-imgs')?.value || '10000';
+
+  // Step 5 — Build Pipeline (separate path: more tokens, code output, markdown allowed)
+  if (step === 5) {
+    const baseModel = document.getElementById('f-base-model')?.value || 'qwen2_vl_7b';
+    const framework = [...(chipSelections['f-framework-chips']||[])].join(', ') || 'huggingface';
+    const finetune = [...(chipSelections['f-finetune-chips']||[])].join(', ') || 'qlora';
+    const hardware = document.getElementById('f-hardware')?.value || 'a100_80gb';
+    const datasetFmt = [...(chipSelections['f-dataset-chips']||[])].join(', ') || 'jsonl';
+    const notes = document.getElementById('f-pipeline-notes')?.value || '';
+    const prevSpec = Object.entries(generatedOutputs).sort(([a],[b])=>a-b).map(([k,v])=>{
+      const titles=['Problem Spec','Data Strategy','Architecture','Training Plan','Deployment Plan'];
+      return `=== ${titles[k]} ===\n${v}`;
+    }).join('\n\n');
+    const buildPrompt = `You are generating runnable Python training code for a multimodal vision AI model.
+
+SPEC CONTEXT:
+${prevSpec || `Industry: ${industry}. Detect: "${what}". Data: ${data}. Latency: ${latency}. FP tolerance: ${fp}.`}
+
+BUILD CONFIG:
+- Base model: ${baseModel}
+- Framework: ${framework}
+- Fine-tuning method: ${finetune}
+- Target hardware: ${hardware}
+- Dataset format: ${datasetFmt}
+- Additional requirements: ${notes || 'none'}
+
+Generate four complete, runnable artifacts:
+
+1. REQUIREMENTS — A requirements.txt with all pinned package versions for this exact stack.
+
+2. DATASET PREP — A Python script (dataset_prep.py) that:
+   - Loads images from a directory
+   - Formats them into the correct training format for this model/framework combo
+   - Saves to ${datasetFmt} format
+   - Includes the correct prompt template for this model
+
+3. TRAINING SCRIPT — A complete train.py that:
+   - Loads the base model with the right quantization config for ${hardware}
+   - Applies ${finetune} with correct rank/alpha settings for this use case
+   - Trains with appropriate batch size, gradient accumulation, and learning rate for ${hardware}
+   - Saves checkpoints and logs metrics
+   - Handles the specific vision-language model loading quirks for ${baseModel}
+
+4. INFERENCE SCRIPT — An inference.py snippet that loads the fine-tuned model and runs prediction on a single image, returning the model output in the correct format for the deployment pipeline.
+
+Use triple backticks with language tags for all code blocks. Be specific — include actual model IDs from HuggingFace hub, correct tokenizer loading, correct image processor loading. No placeholders.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-6', max_tokens:3000,
+          system:`You are an expert ML engineer who writes production-quality Python training code. Generate complete, runnable scripts — not pseudocode. Use real HuggingFace model IDs. Include all imports. Make code copy-paste ready.`,
+          messages:[{ role:'user', content:[{ type:'text', text:buildPrompt }] }]
+        })
+      });
+      const d = await res.json();
+      const text = d.content?.map(b=>b.text||'').join('') || 'No response.';
+      generatedOutputs[5] = text;
+      updateProgressTags(); updateRightPanel();
+      out.innerHTML = `<div class="ai-out"><div class="ai-out-label">✦ Build Pipeline</div><div class="code-out">${renderCodeBlocks(text)}</div></div>`;
+      showToast('Code generated', 'ok');
+    } catch(e) {
+      out.innerHTML = `<div class="ai-out"><div class="ai-out-label">Error</div><div class="ai-out-content loading">Failed. Check connection.</div></div>`;
+    }
+    btn.disabled = false; btn.innerHTML = '<span>✦</span> Regenerate';
+    return;
+  }
 
   const prompts = [
     `Vision AI for ${industry}. Detect: "${what}". Impact: "${why}". Types: ${detTypes||'unspecified'}.\n\nWrite a precise problem spec:\n1. Exact positive/negative case definitions\n2. Key annotation ambiguities to resolve first\n3. Recommended output format with label names\n4. Top 2 false-positive risks`,
@@ -916,6 +1048,25 @@ async function formGenerate(step) {
   btn.disabled = false; btn.innerHTML = '<span>✦</span> Regenerate';
 }
 
+// ── CODE BLOCK RENDERER ──
+function renderCodeBlocks(text) {
+  const parts = text.split(/```(\w*)\n?([\s\S]*?)```/g);
+  let html = '';
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 3 === 0) {
+      // prose between code blocks
+      const prose = parts[i].trim();
+      if (prose) html += `<div class="code-prose">${prose.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+    } else if (i % 3 === 1) {
+      const lang = parts[i] || 'text';
+      const code = (parts[i+1]||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      html += `<div class="code-block-out"><div class="code-block-lang">${lang}</div><pre>${code}</pre></div>`;
+      i++; // skip the code content we just consumed
+    }
+  }
+  return html || `<div class="code-prose">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+}
+
 // ── COST CALC ──
 const costTable = { vlm_large:{base:.0018,gpu:'A100 / H100'}, vlm_small:{base:.0006,gpu:'A10G / L4'}, detector:{base:.00008,gpu:'T4 / V100'}, classifier:{base:.000015,gpu:'T4 / CPU'}, two_stage:{base:.0009,gpu:'A10G + H100'} };
 const provMult = { aws:1.0, gcp:.95, azure:1.05, self:.35 };
@@ -952,7 +1103,7 @@ function updateRightPanel() {
   }
 }
 function updateProgressTags() {
-  const labels = ['Spec','Data','Arch','Train','Deploy'];
+  const labels = ['Spec','Data','Arch','Train','Deploy','Code'];
   labels.forEach((l,i) => {
     const el = document.getElementById(`rpt-${i}`);
     if (generatedOutputs[i]) { el.className='rp-tag tag-done'; el.textContent='✓ '+l; }
