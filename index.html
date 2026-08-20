@@ -1,0 +1,648 @@
+<title>model/builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap">
+<style>
+/* ── TOKENS (dark-first) ── */
+:root {
+  --bg:     #050a14;
+  --bg2:    #070e1a;
+  --surf:   #0b1826;
+  --surf2:  #0f1e2f;
+  --bdr:    #162540;
+  --bdr2:   #1f3556;
+  --ink:    #cfe0f2;
+  --ink2:   #4f7290;
+  --ink3:   #223348;
+  --blue:   #4599ff;
+  --blue-d: rgba(69,153,255,.12);
+  --blue-m: rgba(69,153,255,.24);
+  --teal:   #29c484;
+  --teal-d: rgba(41,196,132,.1);
+  --yell:   #f4c418;
+  --yell-d: rgba(244,196,24,.1);
+  --red:    #f55240;
+  --dot:    rgba(69,153,255,.13);
+  --nav-bg: rgba(5,10,20,.9);
+  --mono:   'IBM Plex Mono', monospace;
+  --sans:   'IBM Plex Sans', sans-serif;
+  --disp:   'Barlow Condensed', sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:     #edf3fb;
+    --bg2:    #e3eef8;
+    --surf:   #f8fbff;
+    --surf2:  #eaf3ff;
+    --bdr:    #bed2e8;
+    --bdr2:   #8db2cc;
+    --ink:    #091828;
+    --ink2:   #38587a;
+    --ink3:   #678099;
+    --blue:   #1659cc;
+    --blue-d: rgba(22,89,204,.08);
+    --blue-m: rgba(22,89,204,.18);
+    --teal:   #0e8c5e;
+    --teal-d: rgba(14,140,94,.08);
+    --yell:   #a87100;
+    --yell-d: rgba(168,113,0,.09);
+    --red:    #cb2f18;
+    --dot:    rgba(22,89,204,.09);
+    --nav-bg: rgba(237,243,251,.93);
+  }
+}
+:root[data-theme="light"] {
+  --bg:     #edf3fb;
+  --bg2:    #e3eef8;
+  --surf:   #f8fbff;
+  --surf2:  #eaf3ff;
+  --bdr:    #bed2e8;
+  --bdr2:   #8db2cc;
+  --ink:    #091828;
+  --ink2:   #38587a;
+  --ink3:   #678099;
+  --blue:   #1659cc;
+  --blue-d: rgba(22,89,204,.08);
+  --blue-m: rgba(22,89,204,.18);
+  --teal:   #0e8c5e;
+  --teal-d: rgba(14,140,94,.08);
+  --yell:   #a87100;
+  --yell-d: rgba(168,113,0,.09);
+  --red:    #cb2f18;
+  --dot:    rgba(22,89,204,.09);
+  --nav-bg: rgba(237,243,251,.93);
+}
+
+/* ── RESET ── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+html { scroll-behavior:smooth }
+body { background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.6; -webkit-font-smoothing:antialiased }
+a { color:inherit; text-decoration:none }
+
+/* ── LAYOUT ── */
+.w { max-width:1100px; margin:0 auto; padding:0 28px }
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  height:52px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px;
+  background:var(--nav-bg); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--bdr);
+}
+.n-logo { font-family:var(--mono); font-size:14px; font-weight:500; color:var(--ink); letter-spacing:.03em; display:flex; align-items:center; gap:10px }
+.n-logo .sl { color:var(--blue) }
+.n-v { font-family:var(--mono); font-size:9px; color:var(--ink3); border:1px solid var(--bdr2); padding:2px 6px; border-radius:3px; letter-spacing:.1em; text-transform:uppercase }
+.n-right { display:flex; align-items:center; gap:18px }
+.n-lnk { font-size:12px; color:var(--ink2); transition:color .15s }
+.n-lnk:hover { color:var(--ink) }
+.n-cta { font-size:12px; font-weight:600; color:#fff; background:var(--blue); padding:6px 16px; border-radius:5px; transition:opacity .15s }
+.n-cta:hover { opacity:.84 }
+
+/* ── HERO ── */
+.hero {
+  position:relative; min-height:100svh; display:flex; flex-direction:column;
+  justify-content:center; padding:110px 28px 80px; overflow:hidden;
+}
+.hero-grid {
+  position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle, var(--dot) 1px, transparent 1px);
+  background-size:30px 30px;
+  mask-image:radial-gradient(ellipse 90% 85% at 14% 50%, black 5%, transparent 78%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 85% at 14% 50%, black 5%, transparent 78%);
+}
+.hero-in { position:relative; z-index:1; max-width:920px }
+.h-live {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--mono); font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--teal); margin-bottom:24px;
+}
+.h-dot { width:7px; height:7px; border-radius:50%; background:var(--teal); position:relative; flex-shrink:0 }
+.h-dot::after {
+  content:''; position:absolute; inset:-4px; border-radius:50%;
+  border:1px solid var(--teal); animation:lpulse 2.5s ease-out infinite; opacity:0;
+}
+@keyframes lpulse { 0%{transform:scale(.4);opacity:.9} 100%{transform:scale(2.8);opacity:0} }
+
+.h-hed {
+  font-family:var(--disp);
+  font-size:clamp(72px, 12vw, 168px);
+  font-weight:800; letter-spacing:-.04em; line-height:.88;
+  color:var(--ink); margin-bottom:32px;
+}
+.h-hed .sl { color:var(--blue) }
+.h-tag {
+  font-size:clamp(15px,1.8vw,19px); font-weight:300; font-style:italic;
+  color:var(--ink2); max-width:530px; line-height:1.6; margin-bottom:36px;
+}
+.h-tag strong { color:var(--ink); font-weight:500; font-style:normal }
+.h-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:40px }
+.h-m { font-family:var(--mono); font-size:11px; color:var(--ink2); letter-spacing:.04em }
+.h-sep { color:var(--ink3); font-family:var(--mono); font-size:11px }
+.h-btns { display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+.btn { display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:500; font-family:var(--sans); padding:10px 22px; border-radius:5px; transition:all .15s }
+.btn-p { background:var(--blue); color:#fff }
+.btn-p:hover { opacity:.84 }
+.btn-g { color:var(--ink2); border:1px solid var(--bdr2); background:transparent }
+.btn-g:hover { color:var(--ink); border-color:var(--ink3) }
+
+.hero-scrl { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; opacity:.28 }
+.scrl-bar { width:1px; height:40px; background:var(--ink2); transform-origin:top; animation:sbar 2s ease-in-out infinite }
+@keyframes sbar { 0%{transform:scaleY(0);opacity:1} 55%{transform:scaleY(1);opacity:1} 100%{transform:scaleY(1);opacity:0} }
+.scrl-txt { font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2) }
+
+/* ── STRIP ── */
+.strip { background:var(--surf); border-top:1px solid var(--bdr); border-bottom:1px solid var(--bdr); overflow-x:auto }
+.strip-in { max-width:1100px; margin:0 auto; padding:20px 28px; display:flex; align-items:stretch }
+.ss { flex:1; min-width:130px; padding:4px 28px; border-right:1px solid var(--bdr); display:flex; flex-direction:column }
+.ss:first-child { padding-left:0 }
+.ss:last-child { border-right:none }
+.ss-n { font-family:var(--mono); font-size:24px; font-weight:500; color:var(--blue); letter-spacing:-.04em; line-height:1 }
+.ss-l { font-size:12px; color:var(--ink2); margin-top:4px; line-height:1.35 }
+.ss-l strong { color:var(--ink); display:block; font-weight:500 }
+
+/* ── SHARED SECTION ── */
+.sec { padding:96px 0 }
+.sec.alt { background:var(--bg2); border-top:1px solid var(--bdr); border-bottom:1px solid var(--bdr) }
+.eyebrow { font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--blue); margin-bottom:10px; display:block }
+.s-hed { font-family:var(--disp); font-size:clamp(30px,4.2vw,52px); font-weight:800; line-height:1.02; letter-spacing:-.03em; color:var(--ink); text-wrap:balance; margin-bottom:12px }
+.s-sub { font-size:14px; color:var(--ink2); max-width:500px; line-height:1.7 }
+
+/* ── PROBLEM ── */
+.prob-cols { display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:start; margin-top:56px }
+.prob-q { font-family:var(--disp); font-size:clamp(22px,3vw,40px); font-weight:700; line-height:1.15; letter-spacing:-.02em; color:var(--ink); border-left:3px solid var(--blue); padding-left:22px; text-wrap:balance }
+.prob-q em { color:var(--blue); font-style:normal }
+.prob-body { font-size:14px; color:var(--ink2); line-height:1.7; margin-bottom:18px }
+.fail-list { list-style:none; display:flex; flex-direction:column; gap:10px }
+.fail-list li { display:flex; align-items:flex-start; gap:10px; font-size:13px; color:var(--ink2); line-height:1.5 }
+.fx { color:var(--red); font-family:var(--mono); font-size:13px; flex-shrink:0; line-height:1.5 }
+
+/* ── PIPELINE ── */
+.pipeline { display:grid; grid-template-columns:repeat(5,1fr); position:relative; margin:52px 0 }
+.pipe-track { position:absolute; top:27px; left:10%; right:10%; height:1px; background:var(--bdr2); z-index:0 }
+.p-step { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; padding:0 4px }
+.p-node { width:54px; height:54px; border-radius:50%; border:1px solid var(--bdr2); background:var(--surf); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:12px; color:var(--blue); transition:all .2s; cursor:default }
+.p-step:hover .p-node { background:var(--blue-d); border-color:var(--blue) }
+.p-name { font-family:var(--mono); font-size:11px; color:var(--ink2); letter-spacing:.04em }
+.p-desc { font-size:10px; color:var(--ink3); line-height:1.45; max-width:88px }
+.how-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px }
+.m-card { background:var(--surf); border:1px solid var(--bdr); border-radius:10px; padding:24px }
+.m-tag { display:inline-flex; font-family:var(--mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:3px; margin-bottom:12px; background:var(--blue-d); color:var(--blue); border:1px solid var(--blue-m) }
+.m-hed { font-family:var(--disp); font-size:22px; font-weight:700; letter-spacing:-.02em; color:var(--ink); margin-bottom:8px }
+.m-body { font-size:13px; color:var(--ink2); line-height:1.65 }
+
+/* ── FEATURES ── */
+.feat-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:48px }
+.f-card { background:var(--surf); border:1px solid var(--bdr); border-radius:10px; padding:28px; transition:border-color .2s }
+.f-card:hover { border-color:var(--bdr2) }
+.f-card.wide { grid-column:1/-1 }
+.f-teal { border-color:rgba(41,196,132,.22); background:linear-gradient(140deg,var(--surf) 55%,var(--teal-d)) }
+.f-yell { border-color:rgba(244,196,24,.2); background:linear-gradient(140deg,var(--surf) 55%,var(--yell-d)) }
+.f-icon { font-size:20px; margin-bottom:14px; display:block }
+.f-hed { font-family:var(--disp); font-size:clamp(18px,2.2vw,26px); font-weight:700; letter-spacing:-.02em; color:var(--ink); margin-bottom:9px }
+.f-body { font-size:13px; color:var(--ink2); line-height:1.65 }
+/* Adversarial inner */
+.adv-in { display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:start; margin-top:18px }
+.adv-prev { background:var(--bg); border:1px solid rgba(245,82,64,.2); border-radius:8px; padding:16px }
+.adv-hdr { display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--red); margin-bottom:12px }
+.adv-dot { width:6px; height:6px; border-radius:50%; background:var(--red); flex-shrink:0 }
+.adv-txt { font-size:12px; color:#d89090; line-height:1.8; font-style:italic }
+/* Scenario chips */
+.sc-grp { margin-top:14px }
+.sc-lbl { font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink3); margin-bottom:7px }
+.sc-chips { display:flex; flex-wrap:wrap; gap:6px }
+.sc-chip { display:inline-flex; align-items:center; gap:5px; background:var(--surf2); border:1px solid var(--bdr); border-radius:4px; padding:4px 10px; font-size:11px; color:var(--ink2) }
+/* Cost mini-cards */
+.cost-mini { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px }
+.cost-mi { background:var(--bg); border:1px solid var(--bdr); border-radius:6px; padding:10px 12px }
+.cost-mi-lbl { font-family:var(--mono); font-size:9px; color:var(--ink3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:3px }
+.cost-mi-n { font-family:var(--mono); font-size:17px; font-weight:500; letter-spacing:-.03em }
+.cost-mi-sub { font-size:10px; color:var(--ink3); margin-top:3px }
+
+/* ── OUTPUT ── */
+.out-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-top:48px }
+.o-card { background:var(--surf); border:1px solid var(--bdr); border-radius:10px; padding:18px 16px; transition:border-color .2s, transform .2s }
+.o-card:hover { border-color:var(--blue-m); transform:translateY(-4px) }
+.o-num { font-family:var(--mono); font-size:10px; color:var(--blue); letter-spacing:.1em; margin-bottom:10px }
+.o-title { font-family:var(--disp); font-size:17px; font-weight:700; letter-spacing:-.01em; color:var(--ink); margin-bottom:12px; line-height:1.1 }
+.o-list { list-style:none; display:flex; flex-direction:column; gap:6px }
+.o-list li { font-size:11px; color:var(--ink2); line-height:1.4; padding-left:14px; position:relative }
+.o-list li::before { content:'→'; position:absolute; left:0; font-family:var(--mono); font-size:9px; color:var(--ink3); line-height:1.7 }
+
+/* ── START ── */
+.start-cols { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; margin-top:48px }
+.code-block { background:var(--surf); border:1px solid var(--bdr); border-radius:8px; padding:18px 22px; font-family:var(--mono); font-size:12px; line-height:2; overflow-x:auto; margin-bottom:10px }
+.c-cmt { color:var(--ink3); font-style:italic }
+.c-cmd { color:var(--ink) }
+.c-str { color:var(--teal) }
+.warn-box { background:var(--yell-d); border:1px solid rgba(244,196,24,.22); border-radius:8px; padding:14px 16px; font-size:12px; color:var(--ink2); line-height:1.65 }
+.warn-box strong { color:var(--yell) }
+.stack-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:22px }
+.sk { background:var(--surf); border:1px solid var(--bdr); border-radius:8px; padding:14px }
+.sk-role { font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink3); margin-bottom:4px }
+.sk-name { font-size:13px; color:var(--ink); font-weight:500; margin-bottom:3px }
+.sk-desc { font-size:11px; color:var(--ink2); line-height:1.4 }
+
+/* ── FOOTER ── */
+footer { background:var(--surf); border-top:1px solid var(--bdr); padding:28px }
+.ft-in { max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+.ft-logo { font-family:var(--mono); font-size:12px; color:var(--ink2) }
+.ft-logo .sl { color:var(--blue) }
+.ft-r { display:flex; align-items:center; gap:20px }
+.ft-lnk { font-size:12px; color:var(--ink3); transition:color .15s }
+.ft-lnk:hover { color:var(--ink) }
+.ft-mit { font-family:var(--mono); font-size:10px; color:var(--ink3) }
+
+/* ── RESPONSIVE ── */
+@media (max-width:900px) {
+  .adv-in { grid-template-columns:1fr }
+  .out-grid { grid-template-columns:repeat(3,1fr) }
+}
+@media (max-width:768px) {
+  .prob-cols { grid-template-columns:1fr; gap:36px }
+  .pipeline { grid-template-columns:1fr 1fr 1fr }
+  .pipe-track,.p-desc { display:none }
+  .how-modes,.feat-grid,.start-cols { grid-template-columns:1fr }
+  .f-card.wide { grid-column:auto }
+  .out-grid { grid-template-columns:1fr 1fr }
+  .stack-grid { grid-template-columns:1fr }
+}
+@media (max-width:480px) {
+  nav .n-lnk { display:none }
+  .out-grid { grid-template-columns:1fr }
+  .cost-mini { grid-template-columns:1fr }
+}
+@media (prefers-reduced-motion:reduce) {
+  .h-dot::after,.scrl-bar { animation:none }
+  .o-card:hover { transform:none }
+}
+a:focus-visible { outline:2px solid var(--blue); outline-offset:3px; border-radius:3px }
+</style>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="n-logo">model<span class="sl">/</span>builder <span class="n-v">v2</span></a>
+  <div class="n-right">
+    <a class="n-lnk" href="#how">How it works</a>
+    <a class="n-lnk" href="#features">Features</a>
+    <a class="n-lnk" href="#output">Output</a>
+    <a class="n-lnk" href="#start">Get started</a>
+    <a class="n-cta" href="https://github.com/TushaeBXN/model-builder" target="_blank" rel="noopener">Download →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="hero-in">
+    <div class="h-live" aria-label="Vision AI">
+      <span class="h-dot" aria-hidden="true"></span>
+      Vision AI · Physical world intelligence
+    </div>
+    <h1 class="h-hed">model<span class="sl">/</span>builder</h1>
+    <p class="h-tag">From problem definition to production-ready spec — in a single session.<br>
+    <strong>Because most vision AI projects fail before a model is ever trained.</strong></p>
+    <div class="h-meta">
+      <span class="h-m">Anthos Intelligence</span>
+      <span class="h-sep">·</span>
+      <span class="h-m">Powered by Claude</span>
+      <span class="h-sep">·</span>
+      <span class="h-m">Zero backend</span>
+      <span class="h-sep">·</span>
+      <span class="h-m">Single HTML file</span>
+    </div>
+    <div class="h-btns">
+      <a class="btn btn-p" href="https://github.com/TushaeBXN/model-builder" target="_blank" rel="noopener">↓ Free download</a>
+      <a class="btn btn-g" href="#how">See how it works</a>
+    </div>
+  </div>
+  <div class="hero-scrl" aria-hidden="true">
+    <div class="scrl-bar"></div>
+    <span class="scrl-txt">Scroll</span>
+  </div>
+</section>
+
+<!-- STATS STRIP -->
+<div class="strip" role="list">
+  <div class="strip-in">
+    <div class="ss" role="listitem">
+      <span class="ss-n">5</span>
+      <span class="ss-l"><strong>Spec sections</strong>Problem → Deploy</span>
+    </div>
+    <div class="ss" role="listitem">
+      <span class="ss-n">11</span>
+      <span class="ss-l"><strong>Built-in scenarios</strong>Production-ready</span>
+    </div>
+    <div class="ss" role="listitem">
+      <span class="ss-n">2</span>
+      <span class="ss-l"><strong>Modes</strong>Interview &amp; Form</span>
+    </div>
+    <div class="ss" role="listitem">
+      <span class="ss-n">0</span>
+      <span class="ss-l"><strong>Backend required</strong>Runs anywhere</span>
+    </div>
+    <div class="ss" role="listitem">
+      <span class="ss-n">MIT</span>
+      <span class="ss-l"><strong>License</strong>Use it, fork it, ship it</span>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="sec" id="problem">
+  <div class="w">
+    <span class="eyebrow">The problem</span>
+    <div class="prob-cols">
+      <div>
+        <p class="prob-q">Most vision AI projects fail <em>before a model is ever trained</em> — because the spec was wrong.</p>
+      </div>
+      <div>
+        <p class="prob-body">Wrong label definitions. Wrong edge cases. Wrong architecture for the latency requirement. Wrong output format for the downstream system. model/builder fixes that — before any training begins.</p>
+        <ul class="fail-list">
+          <li><span class="fx">×</span>Label definitions too vague to annotate consistently</li>
+          <li><span class="fx">×</span>Edge cases identified after labeling thousands of frames</li>
+          <li><span class="fx">×</span>Architecture chosen before understanding latency requirements</li>
+          <li><span class="fx">×</span>Binary output when downstream needs graded severity</li>
+          <li><span class="fx">×</span>No adversarial review until the model is already in production</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="sec alt" id="how">
+  <div class="w">
+    <span class="eyebrow">How it works</span>
+    <h2 class="s-hed">Structured interview → complete spec</h2>
+    <p class="s-sub">Claude asks the right follow-up questions one or two at a time. When it has enough context for a section, it writes the spec directly and moves on.</p>
+
+    <div class="pipeline" role="list">
+      <div class="pipe-track" aria-hidden="true"></div>
+      <div class="p-step" role="listitem">
+        <div class="p-node">01</div>
+        <span class="p-name">Problem</span>
+        <span class="p-desc">Exact positive / negative case definitions</span>
+      </div>
+      <div class="p-step" role="listitem">
+        <div class="p-node">02</div>
+        <span class="p-name">Data</span>
+        <span class="p-desc">Annotation schema, edge case plan</span>
+      </div>
+      <div class="p-step" role="listitem">
+        <div class="p-node">03</div>
+        <span class="p-name">Architecture</span>
+        <span class="p-desc">VLM vs detector vs hybrid</span>
+      </div>
+      <div class="p-step" role="listitem">
+        <div class="p-node">04</div>
+        <span class="p-name">Training</span>
+        <span class="p-desc">Fine-tune method, eval design</span>
+      </div>
+      <div class="p-step" role="listitem">
+        <div class="p-node">05</div>
+        <span class="p-name">Deploy</span>
+        <span class="p-desc">Pipeline, monitoring, cost</span>
+      </div>
+    </div>
+
+    <div class="how-modes">
+      <div class="m-card">
+        <div class="m-tag">Default</div>
+        <div class="m-hed">Interview Mode</div>
+        <p class="m-body">Claude leads. Describe your detection problem in plain language and Claude pulls out what it needs through conversation. Spec sections are written directly into the chat as they're completed.</p>
+      </div>
+      <div class="m-card">
+        <div class="m-hed">Form Mode</div>
+        <p class="m-body">You lead. Five structured steps, each with targeted fields and a generate button. Better when you already know your inputs and just want fast output. Switch between modes anytime — state is preserved.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="sec" id="features">
+  <div class="w">
+    <span class="eyebrow">Features</span>
+    <h2 class="s-hed">Built around what actually matters</h2>
+    <p class="s-sub">Not a chatbot wrapper. A structured interview tool designed around how vision AI projects actually succeed — or fail.</p>
+
+    <div class="feat-grid">
+
+      <!-- Adversarial — wide, flagship -->
+      <div class="f-card wide">
+        <span class="f-icon">⚔️</span>
+        <div class="f-hed">Adversarial Mode</div>
+        <div class="adv-in">
+          <div>
+            <p class="f-body">Toggle it on and every spec Claude generates is immediately followed by a critique — Claude playing the role of a skeptical senior ML engineer trying to find the gaps.</p>
+            <br>
+            <p class="f-body" style="max-width:none"><strong style="color:var(--ink)">Not generic advice. Pointed critique grounded in what you actually described.</strong> Specific failure modes. Missing edge cases. Annotation ambiguities. Deployment risks. Most spec tools tell you what to build. This one also tells you why it might fail.</p>
+          </div>
+          <div class="adv-prev">
+            <div class="adv-hdr"><span class="adv-dot"></span>Adversarial Review</div>
+            <p class="adv-txt">1. "Flooded" vs "wet road" boundary is undefined — annotators will diverge on 2–4 cm water depth. This alone kills recall consistency.<br><br>
+2. Rain-at-night combines two failure modes simultaneously. Your spec addresses them separately; the model will see them together.<br><br>
+3. No mention of camera angle variance. A feed 8 meters high reads flooding differently than one at 3 meters. Both exist in a city deployment.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image upload -->
+      <div class="f-card f-teal">
+        <span class="f-icon">📎</span>
+        <div class="f-hed">Grounded to Your Footage</div>
+        <p class="f-body">Drop a real frame from your camera feed. Claude analyzes the specific scene — lighting conditions, camera angle, what a false positive would literally look like in this footage. The spec it generates references what it actually sees, not a generic description of your use case.</p>
+      </div>
+
+      <!-- Scenarios -->
+      <div class="f-card">
+        <span class="f-icon">📋</span>
+        <div class="f-hed">11 Production Scenarios</div>
+        <p class="f-body" style="margin-bottom:4px">Pre-built scenarios that auto-fill all fields instantly. Drawn from real production deployments.</p>
+        <div class="sc-grp">
+          <div class="sc-lbl">Smart Cities &amp; Traffic</div>
+          <div class="sc-chips">
+            <span class="sc-chip">🌊 Flood detection</span>
+            <span class="sc-chip">🚧 Traffic obstruction</span>
+            <span class="sc-chip">🏗️ Road construction</span>
+            <span class="sc-chip">🚶 Yield-to-pedestrian</span>
+          </div>
+        </div>
+        <div class="sc-grp" style="margin-top:10px">
+          <div class="sc-lbl">Industrial · Retail · Agriculture</div>
+          <div class="sc-chips">
+            <span class="sc-chip">🦺 PPE compliance</span>
+            <span class="sc-chip">🔍 Product defects</span>
+            <span class="sc-chip">⚠️ Spill / hazard</span>
+            <span class="sc-chip">👥 Crowd density</span>
+            <span class="sc-chip">🧹 Slip hazard</span>
+            <span class="sc-chip">🌱 Crop disease</span>
+            <span class="sc-chip">💧 Irrigation leak</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cost estimator -->
+      <div class="f-card f-yell">
+        <span class="f-icon">💰</span>
+        <div class="f-hed">Inference Cost Estimator</div>
+        <p class="f-body">Input your daily image volume, model type, and cloud provider — get cost-per-image, daily, monthly, and annual estimates with compute/storage breakdown and GPU recommendation.</p>
+        <div class="cost-mini">
+          <div class="cost-mi">
+            <div class="cost-mi-lbl">VLM Large 8B+</div>
+            <div class="cost-mi-n" style="color:var(--yell)">$0.0018<span style="font-size:11px;color:var(--ink3);font-weight:400">/img</span></div>
+            <div class="cost-mi-sub">A100 / H100</div>
+          </div>
+          <div class="cost-mi">
+            <div class="cost-mi-lbl">Object Detector</div>
+            <div class="cost-mi-n" style="color:var(--teal)">$0.00008<span style="font-size:11px;color:var(--ink3);font-weight:400">/img</span></div>
+            <div class="cost-mi-sub">T4 / V100</div>
+          </div>
+          <div class="cost-mi">
+            <div class="cost-mi-lbl">VLM Small 3B</div>
+            <div class="cost-mi-n" style="color:var(--yell)">$0.0006<span style="font-size:11px;color:var(--ink3);font-weight:400">/img</span></div>
+            <div class="cost-mi-sub">A10G / L4</div>
+          </div>
+          <div class="cost-mi">
+            <div class="cost-mi-lbl">Self-hosted mult.</div>
+            <div class="cost-mi-n" style="color:var(--blue)">0.35×<span style="font-size:11px;color:var(--ink3);font-weight:400"> cloud</span></div>
+            <div class="cost-mi-sub">Your GPU</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="f-card wide">
+        <span class="f-icon">📄</span>
+        <div class="f-hed">Export Ready</div>
+        <p class="f-body" style="max-width:none"><strong style="color:var(--ink)">PDF</strong> — formatted multi-page report with cover page, cost summary, and one section per spec stage. Client-ready on the spot, fully client-side via jsPDF — no server. &nbsp; <strong style="color:var(--ink)">TXT</strong> — plain text dump for Notion, Confluence, Linear, or wherever your team lives.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- OUTPUT CARDS -->
+<section class="sec alt" id="output">
+  <div class="w">
+    <span class="eyebrow">Output</span>
+    <h2 class="s-hed">Five sections — each a working artifact</h2>
+    <p class="s-sub">Not summaries. Not suggestions. The actual spec content your team can execute against.</p>
+    <div class="out-grid">
+      <div class="o-card">
+        <div class="o-num">01 · PROBLEM</div>
+        <div class="o-title">Problem Specification</div>
+        <ul class="o-list">
+          <li>Exact positive/negative case definitions</li>
+          <li>Annotation ambiguities to resolve first</li>
+          <li>Output format with label names</li>
+          <li>Top false-positive risks</li>
+        </ul>
+      </div>
+      <div class="o-card">
+        <div class="o-num">02 · DATA</div>
+        <div class="o-title">Data Strategy</div>
+        <ul class="o-list">
+          <li>Minimum labeled data + reasoning</li>
+          <li>Full annotation schema</li>
+          <li>Class balancing approach</li>
+          <li>Train / val / test split</li>
+        </ul>
+      </div>
+      <div class="o-card">
+        <div class="o-num">03 · ARCH</div>
+        <div class="o-title">Model Architecture</div>
+        <ul class="o-list">
+          <li>Specific model names, not categories</li>
+          <li>Two-stage screening decision</li>
+          <li>VLM prompt engineering strategy</li>
+          <li>Inference cost per image</li>
+        </ul>
+      </div>
+      <div class="o-card">
+        <div class="o-num">04 · TRAIN</div>
+        <div class="o-title">Training Plan</div>
+        <ul class="o-list">
+          <li>Fine-tuning method (SFT / LoRA)</li>
+          <li>Cross-check rephrasing technique</li>
+          <li>Eval benchmark with rejection cases</li>
+          <li>Target accuracy range</li>
+        </ul>
+      </div>
+      <div class="o-card">
+        <div class="o-num">05 · DEPLOY</div>
+        <div class="o-title">Deployment Plan</div>
+        <ul class="o-list">
+          <li>Inference pipeline architecture</li>
+          <li>Production monitoring metrics</li>
+          <li>Drift detection + retraining triggers</li>
+          <li>Alert and escalation logic</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GETTING STARTED -->
+<section class="sec" id="start">
+  <div class="w">
+    <span class="eyebrow">Getting started</span>
+    <h2 class="s-hed">No install. No build step.</h2>
+    <p class="s-sub">A single HTML file. Open it in a browser and you're running — inside claude.ai or with your own API key.</p>
+    <div class="start-cols">
+      <div>
+        <div class="code-block">
+<span class="c-cmt"># Clone and open — that's it</span>
+<span class="c-cmd">git clone https://github.com/TushaeBXN/model-builder</span>
+<span class="c-cmd">cd model-builder</span>
+<span class="c-cmd">open model_builder_v2.html</span>
+        </div>
+        <div class="code-block">
+<span class="c-cmt"># Or serve locally</span>
+<span class="c-cmd">python3 -m http.server 8080</span>
+<span class="c-cmt"># → http://localhost:8080/model_builder_v2.html</span>
+        </div>
+        <div class="warn-box">
+          <strong>⚠ Running outside claude.ai?</strong> Add <code style="font-family:var(--mono);font-size:11px">"x-api-key"</code> and <code style="font-family:var(--mono);font-size:11px">"anthropic-version"</code> to the fetch headers. Never commit API keys — for anything beyond local use, put a lightweight proxy in front.
+        </div>
+      </div>
+      <div>
+        <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:4px">The stack is intentionally minimal. No npm, no build pipeline, no server dependency.</p>
+        <div class="stack-grid">
+          <div class="sk">
+            <div class="sk-role">UI</div>
+            <div class="sk-name">Vanilla HTML / CSS / JS</div>
+            <div class="sk-desc">Zero dependencies. Runs anywhere. Shareable as a single file.</div>
+          </div>
+          <div class="sk">
+            <div class="sk-role">AI</div>
+            <div class="sk-name">Claude Sonnet 4.6</div>
+            <div class="sk-desc">Vision-language reasoning with full image input support.</div>
+          </div>
+          <div class="sk">
+            <div class="sk-role">PDF</div>
+            <div class="sk-name">jsPDF</div>
+            <div class="sk-desc">Fully client-side. No server required.</div>
+          </div>
+          <div class="sk">
+            <div class="sk-role">Fonts</div>
+            <div class="sk-name">IBM Plex + Inter</div>
+            <div class="sk-desc">Google Fonts CDN — the only external dependency.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-in">
+    <span class="ft-logo">model<span class="sl">/</span>builder &nbsp;·&nbsp; <span style="color:var(--ink3)">Anthos Intelligence</span></span>
+    <div class="ft-r">
+      <a class="ft-lnk" href="https://github.com/TushaeBXN/model-builder" target="_blank" rel="noopener">GitHub</a>
+      <span class="ft-mit">MIT License</span>
+    </div>
+  </div>
+</footer>
