@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>model/builder — Vision AI Spec Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080a0f;--surface:#0f1117;--surface2:#161b26;--surface3:#1c2233;
+  --border:#232840;--border2:#2d3555;
+  --accent:#4f8ef7;--accent2:#7c5bf7;--accent3:#3dd68c;
+  --yellow:#f5c842;--red:#f7634f;--orange:#f78c4f;
+  --text:#e8ecf4;--text2:#9ba3bf;--text3:#5a6180;
+  --mono:'IBM Plex Mono',monospace;--sans:'Inter',sans-serif;
+  --glow:0 0 20px rgba(79,142,247,0.15);
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;gap:16px;
+  padding:0 24px;height:52px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.logo{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent);letter-spacing:.06em}
+.logo em{color:var(--text3);font-style:normal}
+.version{font-family:var(--mono);font-size:9px;color:var(--text3);border:1px solid var(--border2);padding:2px 6px;border-radius:3px;letter-spacing:.1em}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.mode-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.mode-btn{padding:5px 12px;font-size:11px;font-family:var(--mono);cursor:pointer;color:var(--text3);border:none;background:transparent;letter-spacing:.05em;transition:all .15s}
+.mode-btn.active{background:var(--accent);color:white}
+.hbtn{padding:6px 14px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:var(--sans);transition:all .15s}
+.hbtn-ghost{background:transparent;color:var(--text3);border:1px solid var(--border)}
+.hbtn-ghost:hover{color:var(--text);border-color:var(--border2)}
+.hbtn-pdf{background:rgba(245,200,66,.1);color:var(--yellow);border:1px solid rgba(245,200,66,.25)}
+.hbtn-pdf:hover{background:rgba(245,200,66,.18)}
+
+/* ── LAYOUT ── */
+.workspace{display:flex;flex:1;overflow:hidden;height:calc(100vh - 52px)}
+
+/* ── LEFT SIDEBAR ── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-section{padding:14px 14px 0}
+.sidebar-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 10px;border-radius:5px;cursor:pointer;
+  font-size:12px;color:var(--text3);transition:all .15s;
+  border:1px solid transparent;margin-bottom:2px;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(79,142,247,.1);border-color:rgba(79,142,247,.2);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--accent3)}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
+.nav-item.active .nav-dot{background:var(--accent)}
+.nav-title{font-weight:500;flex:1}
+.nav-check{font-size:10px;color:var(--accent3)}
+
+.sidebar-divider{height:1px;background:var(--border);margin:12px 14px}
+
+.scenario-scroll{flex:1;overflow-y:auto;padding:0 14px 14px}
+.sc-group{margin-bottom:10px}
+.sc-group-name{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:5px;letter-spacing:.03em}
+.sc-item{
+  display:flex;align-items:center;gap:7px;
+  width:100%;padding:5px 8px;border-radius:4px;
+  font-size:11px;color:var(--text3);cursor:pointer;
+  background:transparent;border:none;font-family:var(--sans);
+  text-align:left;transition:all .12s;
+}
+.sc-item:hover{background:var(--surface2);color:var(--text)}
+.sc-emoji{font-size:12px;flex-shrink:0}
+
+/* ── MAIN AREA ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* ── INTERVIEW MODE ── */
+.interview-mode{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chat-history{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:16px}
+.msg{display:flex;gap:12px;max-width:780px}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-avatar{
+  width:28px;height:28px;border-radius:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+}
+.msg-avatar.ai{background:rgba(79,142,247,.15);color:var(--accent);font-family:var(--mono);font-size:9px;font-weight:600}
+.msg-avatar.user{background:rgba(61,214,140,.12);color:var(--accent3);font-size:12px}
+.msg-bubble{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.65;
+  color:var(--text);max-width:560px;
+}
+.msg.user .msg-bubble{background:rgba(79,142,247,.08);border-color:rgba(79,142,247,.2)}
+.msg-bubble.typing{color:var(--text3);font-style:italic}
+.typing-dots{display:inline-flex;gap:3px;align-items:center}
+.typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* Adversarial block inside chat */
+.adversarial-block{
+  background:rgba(247,99,79,.06);border:1px solid rgba(247,99,79,.25);
+  border-radius:8px;padding:12px 14px;margin-top:10px;
+}
+.adv-header{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.adv-icon{font-size:13px}
+.adv-label{font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:.1em;text-transform:uppercase}
+.adv-content{font-size:12px;line-height:1.6;color:#e8a09a;white-space:pre-wrap}
+
+/* Spec card inside chat */
+.spec-card{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:8px;padding:12px 14px;margin-top:10px;
+}
+.spec-card-label{font-family:var(--mono);font-size:9px;color:var(--accent3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.spec-card-content{font-size:12px;line-height:1.65;color:var(--text);white-space:pre-wrap}
+
+/* Image preview in chat */
+.img-preview-thumb{
+  max-width:220px;max-height:150px;border-radius:6px;
+  border:1px solid var(--border2);margin-top:6px;display:block;object-fit:cover;
+}
+
+/* Chat input bar */
+.chat-input-area{
+  padding:16px 28px;border-top:1px solid var(--border);
+  background:var(--surface);flex-shrink:0;
+}
+.chat-input-row{display:flex;gap:10px;align-items:flex-end}
+.chat-input-wrap{flex:1;position:relative}
+.chat-textarea{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);border-radius:8px;padding:10px 44px 10px 14px;
+  font-size:13px;font-family:var(--sans);outline:none;resize:none;
+  min-height:42px;max-height:140px;line-height:1.5;transition:border-color .15s;
+}
+.chat-textarea:focus{border-color:var(--accent)}
+.chat-textarea::placeholder{color:var(--text3)}
+.attach-btn{
+  position:absolute;right:10px;bottom:9px;
+  background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;
+  padding:2px;transition:color .15s;
+}
+.attach-btn:hover{color:var(--accent)}
+.send-btn{
+  width:42px;height:42px;border-radius:8px;border:none;cursor:pointer;
+  background:var(--accent);color:white;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.send-btn:hover{background:#3a7de8}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+.input-meta{display:flex;align-items:center;gap:10px;margin-top:7px}
+.input-hint{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.adv-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.adv-toggle-box{
+  width:28px;height:16px;border-radius:8px;background:var(--surface3);
+  border:1px solid var(--border2);position:relative;transition:background .2s;cursor:pointer;
+}
+.adv-toggle-box.on{background:rgba(247,99,79,.3);border-color:rgba(247,99,79,.5)}
+.adv-toggle-knob{
+  width:10px;height:10px;border-radius:50%;background:var(--text3);
+  position:absolute;top:2px;left:2px;transition:all .2s;
+}
+.adv-toggle-box.on .adv-toggle-knob{left:14px;background:var(--red)}
+.adv-toggle-label{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.adv-toggle-box.on + .adv-toggle-label{color:var(--red)}
+
+/* ── FORM MODE ── */
+.form-mode{flex:1;display:flex;overflow:hidden}
+.form-scroll{flex:1;overflow-y:auto;padding:24px 28px}
+.step-section{display:none}
+.step-section.active{display:block}
+.fs-title{font-size:17px;font-weight:600;margin-bottom:3px}
+.fs-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
+.progress-bar{height:2px;background:var(--border);margin-bottom:18px;border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+label{display:block;font-size:10px;font-weight:500;color:var(--text3);margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase}
+input,textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none;transition:border-color .15s;margin-bottom:14px}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:75px;line-height:1.5}
+select{cursor:pointer}
+select option{background:var(--surface2)}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-size:11px;cursor:pointer;color:var(--text3);transition:all .15s;user-select:none}
+.chip:hover{border-color:var(--accent);color:var(--text)}
+.chip.selected{background:rgba(79,142,247,.12);border-color:var(--accent);color:var(--accent)}
+.gen-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:opacity .15s;margin-bottom:4px}
+.gen-btn:hover{opacity:.88}
+.gen-btn:disabled{opacity:.4;cursor:not-allowed}
+.ai-out{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:14px}
+.ai-out-label{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.ai-out-content{font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap}
+.ai-out-content.loading{color:var(--text3);font-style:italic}
+
+/* Cost card */
+.cost-card{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:16px;margin-bottom:14px}
+.cost-title{font-family:var(--mono);font-size:10px;color:var(--yellow);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.cost-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.ci label{font-size:9px;margin-bottom:4px}
+.ci input,.ci select{margin-bottom:0;font-size:12px;padding:7px 9px}
+.cost-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cost-item{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px}
+.cost-lbl{font-size:10px;color:var(--text3);margin-bottom:3px}
+.cost-num{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text)}
+.cost-num.hi{color:var(--yellow)}
+.cost-breakdown{margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+.cb-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0}
+.cb-lbl{color:var(--text3)}
+.cb-val{font-family:var(--mono);color:var(--text)}
+
+/* Bottom bar */
+.form-bottom{padding:12px 28px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface);flex-shrink:0}
+.fbtn{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:var(--sans);transition:all .15s}
+.fbtn-primary{background:var(--accent);color:white}
+.fbtn-primary:hover{background:#3a7de8}
+.fbtn-ghost{background:transparent;color:var(--text3);border:1px solid var(--border)}
+.fbtn-ghost:hover{color:var(--text)}
+
+/* ── RIGHT PANEL ── */
+.right-panel{
+  width:240px;flex-shrink:0;
+  background:var(--surface);border-left:1px solid var(--border);
+  padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:0;
+}
+.rp-section{margin-bottom:14px}
+.rp-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px}
+.rp-val{font-size:12px;color:var(--text);line-height:1.5}
+.rp-empty{color:var(--text3);font-style:italic;font-size:11px}
+.rp-divider{height:1px;background:var(--border);margin:10px 0}
+.rp-metric{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.rp-metric:last-child{border-bottom:none}
+.rp-metric-name{color:var(--text3)}
+.rp-metric-val{font-family:var(--mono);color:var(--accent3)}
+.rp-tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-size:10px;font-family:var(--mono);margin:2px}
+.tag-done{background:rgba(61,214,140,.12);color:var(--accent3)}
+.tag-pend{background:var(--surface2);color:var(--text3)}
+.rp-pipeline{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin-top:4px}
+.rp-pbox{background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:3px 8px;font-size:10px;font-family:var(--mono);color:var(--text3)}
+.rp-pbox.hi{border-color:rgba(79,142,247,.4);color:var(--accent)}
+.rp-parrow{font-size:10px;color:var(--text3)}
+
+/* Image upload drop */
+#img-upload-hidden{display:none}
+.img-drop-zone{
+  border:2px dashed var(--border2);border-radius:8px;padding:16px;
+  text-align:center;cursor:pointer;transition:all .15s;margin-bottom:14px;
+}
+.img-drop-zone:hover,.img-drop-zone.dragover{border-color:var(--accent);background:rgba(79,142,247,.04)}
+.img-drop-text{font-size:12px;color:var(--text3)}
+.img-drop-hint{font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--mono)}
+.img-preview{max-width:100%;max-height:120px;border-radius:5px;border:1px solid var(--border2);margin-top:8px;display:none}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:10px 16px;font-size:12px;z-index:999;transform:translateY(60px);opacity:0;transition:all .25s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(61,214,140,.4);color:var(--accent3)}
+.toast.err{border-color:rgba(247,99,79,.4);color:var(--red)}
+
+/* Image analysis badge in right panel */
+.img-badge{display:flex;align-items:center;gap:6px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:5px;padding:7px 10px;margin-top:6px}
+.img-badge-thumb{width:32px;height:32px;border-radius:3px;object-fit:cover;flex-shrink:0}
+.img-badge-text{font-size:10px;color:var(--text2);line-height:1.4}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">model<em>/</em>builder</div>
+  <div class="version">v2</div>
+  <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:4px">by <span style="color:var(--text2)">Anthos Intelligence</span></div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" onclick="setMode('interview')">Interview</button>
+    <button class="mode-btn" onclick="setMode('form')">Form</button>
+  </div>
+  <div class="header-right">
+    <button class="hbtn hbtn-ghost" onclick="exportTxt()">↓ TXT</button>
+    <button class="hbtn hbtn-pdf" onclick="exportPdf()">↓ PDF</button>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Pipeline</div>
+      <div class="nav-item active" data-step="0" onclick="formGoTo(0)">
+        <div class="nav-dot"></div><span class="nav-title">Problem</span><span class="nav-check" id="nc0"></span>
+      </div>
+      <div class="nav-item" data-step="1" onclick="formGoTo(1)">
+        <div class="nav-dot"></div><span class="nav-title">Data</span><span class="nav-check" id="nc1"></span>
+      </div>
+      <div class="nav-item" data-step="2" onclick="formGoTo(2)">
+        <div class="nav-dot"></div><span class="nav-title">Architecture</span><span class="nav-check" id="nc2"></span>
+      </div>
+      <div class="nav-item" data-step="3" onclick="formGoTo(3)">
+        <div class="nav-dot"></div><span class="nav-title">Training</span><span class="nav-check" id="nc3"></span>
+      </div>
+      <div class="nav-item" data-step="4" onclick="formGoTo(4)">
+        <div class="nav-dot"></div><span class="nav-title">Cost & Deploy</span><span class="nav-check" id="nc4"></span>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="scenario-scroll">
+      <div class="sidebar-label">Scenarios</div>
+      <div class="sc-group">
+        <div class="sc-group-name">Smart Cities</div>
+        <button class="sc-item" onclick="loadScenario('flooding')"><span class="sc-emoji">🌊</span>Flood detection</button>
+        <button class="sc-item" onclick="loadScenario('traffic_block')"><span class="sc-emoji">🚧</span>Traffic obstruction</button>
+        <button class="sc-item" onclick="loadScenario('road_construction')"><span class="sc-emoji">🏗️</span>Road construction</button>
+        <button class="sc-item" onclick="loadScenario('yield_pedestrian')"><span class="sc-emoji">🚶</span>Yield-to-pedestrian</button>
+      </div>
+      <div class="sc-group">
+        <div class="sc-group-name">Industrial</div>
+        <button class="sc-item" onclick="loadScenario('ppe_compliance')"><span class="sc-emoji">🦺</span>PPE compliance</button>
+        <button class="sc-item" onclick="loadScenario('defect_detection')"><span class="sc-emoji">🔍</span>Product defects</button>
+        <button class="sc-item" onclick="loadScenario('spill_detection')"><span class="sc-emoji">⚠️</span>Spill / hazard</button>
+      </div>
+      <div class="sc-group">
+        <div class="sc-group-name">Retail / Safety</div>
+        <button class="sc-item" onclick="loadScenario('crowd_density')"><span class="sc-emoji">👥</span>Crowd density</button>
+        <button class="sc-item" onclick="loadScenario('slip_hazard')"><span class="sc-emoji">🧹</span>Slip hazard</button>
+      </div>
+      <div class="sc-group">
+        <div class="sc-group-name">Agriculture</div>
+        <button class="sc-item" onclick="loadScenario('crop_disease')"><span class="sc-emoji">🌱</span>Crop disease</button>
+        <button class="sc-item" onclick="loadScenario('irrigation_leak')"><span class="sc-emoji">💧</span>Irrigation leak</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ── INTERVIEW MODE ── -->
+    <div class="interview-mode" id="interview-mode">
+      <div class="chat-history" id="chat-history"></div>
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <div class="chat-input-wrap">
+            <textarea class="chat-textarea" id="chat-input" rows="1" placeholder="Describe your detection problem, or just say what industry you're in…" onkeydown="chatKeydown(event)" oninput="autoResize(this)"></textarea>
+            <button class="attach-btn" title="Attach image" onclick="document.getElementById('img-upload-hidden').click()">📎</button>
+            <input type="file" id="img-upload-hidden" accept="image/*" onchange="handleImageUpload(event)">
+          </div>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">↑</button>
+        </div>
+        <div class="input-meta">
+          <span class="input-hint">↵ send · shift+↵ newline</span>
+          <div class="adv-toggle" onclick="toggleAdversarial()">
+            <div class="adv-toggle-box" id="adv-box"></div>
+            <span class="adv-toggle-label" id="adv-label">Adversarial off</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FORM MODE ── -->
+    <div class="form-mode" id="form-mode" style="display:none">
+      <div class="form-scroll">
+
+        <!-- Step 0 -->
+        <div class="step-section active" id="fs-0">
+          <div class="fs-title">Problem Definition</div>
+          <div class="fs-sub">What to detect, why it matters, and what makes it hard.</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+          <div class="img-drop-zone" id="drop-zone" onclick="document.getElementById('img-upload-form').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="dropImage(event)">
+            <div class="img-drop-text">📎 Drop a frame from your camera feed</div>
+            <div class="img-drop-hint">Claude will ground the spec in your actual footage</div>
+            <img id="img-preview-form" class="img-preview">
+          </div>
+          <input type="file" id="img-upload-form" accept="image/*" style="display:none" onchange="handleFormImage(event)">
+          <label>Industry</label>
+          <select id="f-industry">
+            <option value="">Select…</option>
+            <option>Smart Cities & Traffic</option><option>Manufacturing & Industrial</option>
+            <option>Retail & Public Safety</option><option>Healthcare & Medical Imaging</option>
+            <option>Agriculture</option><option>Construction & Infrastructure</option><option>Other</option>
+          </select>
+          <label>What to detect</label>
+          <textarea id="f-what" placeholder="e.g. Flooded roadways blocking vehicle passage…"></textarea>
+          <label>Business impact</label>
+          <textarea id="f-why" placeholder="e.g. Reduce flood response time, auto-reroute traffic…"></textarea>
+          <label>Detection type</label>
+          <div class="chip-row" id="f-det-chips">
+            <div class="chip" data-val="binary">Binary</div><div class="chip" data-val="graded">Graded severity</div>
+            <div class="chip" data-val="classification">Multi-class</div><div class="chip" data-val="reasoning">Reasoning</div>
+            <div class="chip" data-val="realtime">Real-time</div>
+          </div>
+          <button class="gen-btn" id="gb0" onclick="formGenerate(0)"><span>✦</span>Generate Spec</button>
+          <div id="fo-0"></div>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step-section" id="fs-1">
+          <div class="fs-title">Data Strategy</div>
+          <div class="fs-sub">Sources, annotation schema, and edge case plan.</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+          <label>Data availability</label>
+          <select id="f-data">
+            <option>No data yet</option><option>Under 100 examples</option>
+            <option>100–1,000 examples</option><option>1,000–10,000 examples</option><option>10,000+ examples</option>
+          </select>
+          <label>Sources</label>
+          <div class="chip-row" id="f-src-chips">
+            <div class="chip" data-val="cameras">Existing cameras</div><div class="chip" data-val="synthetic">Synthetic</div>
+            <div class="chip" data-val="public">Public datasets</div><div class="chip" data-val="partners">Partner data</div>
+          </div>
+          <label>Edge cases you're worried about</label>
+          <textarea id="f-edge" placeholder="e.g. Rain-slicked roads that look flooded, nighttime glare…"></textarea>
+          <button class="gen-btn" id="gb1" onclick="formGenerate(1)"><span>✦</span>Generate Data Plan</button>
+          <div id="fo-1"></div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-section" id="fs-2">
+          <div class="fs-title">Model Architecture</div>
+          <div class="fs-sub">VLM vs detector vs hybrid, and staging strategy.</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+          <label>Latency</label>
+          <select id="f-latency"><option>Real-time (&lt;100ms)</option><option>Near real-time (&lt;1s)</option><option>Batch</option></select>
+          <label>Explainability</label>
+          <div class="chip-row" id="f-exp-chips">
+            <div class="chip" data-val="none">None needed</div><div class="chip" data-val="brief">Brief reason</div><div class="chip" data-val="full">Full CoT</div>
+          </div>
+          <label>Compute</label>
+          <select id="f-compute"><option>Cloud</option><option>Edge GPU</option><option>CPU edge</option><option>Hybrid</option></select>
+          <button class="gen-btn" id="gb2" onclick="formGenerate(2)"><span>✦</span>Recommend Architecture</button>
+          <div id="fo-2"></div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-section" id="fs-3">
+          <div class="fs-title">Training Plan</div>
+          <div class="fs-sub">Fine-tuning approach and evaluation design.</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+          <label>False positive tolerance</label>
+          <select id="f-fp"><option>Very low (safety-critical)</option><option>Low</option><option>Moderate (human-in-loop)</option></select>
+          <label>Primary metric</label>
+          <div class="chip-row" id="f-met-chips">
+            <div class="chip" data-val="recall">Recall first</div><div class="chip" data-val="precision">Precision first</div>
+            <div class="chip" data-val="f1">Balanced F1</div>
+          </div>
+          <button class="gen-btn" id="gb3" onclick="formGenerate(3)"><span>✦</span>Generate Training Plan</button>
+          <div id="fo-3"></div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-section" id="fs-4">
+          <div class="fs-title">Cost & Deployment</div>
+          <div class="fs-sub">Inference cost estimate and live pipeline plan.</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <div class="cost-card">
+            <div class="cost-title">💰 Cost Estimator</div>
+            <div class="cost-inputs">
+              <div class="ci"><label>Images / day</label><input type="number" id="c-imgs" value="10000" oninput="calcCost()"></div>
+              <div class="ci"><label>Model type</label>
+                <select id="c-model" onchange="calcCost()">
+                  <option value="vlm_large">VLM Large 8B+</option><option value="vlm_small">VLM Small 3B</option>
+                  <option value="detector">Object Detector</option><option value="classifier">Classifier</option>
+                  <option value="two_stage">Two-stage</option>
+                </select></div>
+              <div class="ci"><label>Provider</label>
+                <select id="c-prov" onchange="calcCost()">
+                  <option value="aws">AWS</option><option value="gcp">GCP</option>
+                  <option value="azure">Azure</option><option value="self">Self-hosted</option>
+                </select></div>
+            </div>
+            <div class="cost-grid">
+              <div class="cost-item"><div class="cost-lbl">Per image</div><div class="cost-num hi" id="c-per">—</div></div>
+              <div class="cost-item"><div class="cost-lbl">Daily</div><div class="cost-num hi" id="c-day">—</div></div>
+              <div class="cost-item"><div class="cost-lbl">Monthly</div><div class="cost-num" id="c-mo">—</div></div>
+              <div class="cost-item"><div class="cost-lbl">Annual</div><div class="cost-num" id="c-yr">—</div></div>
+            </div>
+            <div class="cost-breakdown">
+              <div class="cb-row"><span class="cb-lbl">Compute</span><span class="cb-val" id="c-comp">—</span></div>
+              <div class="cb-row"><span class="cb-lbl">Storage</span><span class="cb-val" id="c-stor">—</span></div>
+              <div class="cb-row"><span class="cb-lbl">Recommended GPU</span><span class="cb-val" id="c-gpu">—</span></div>
+            </div>
+          </div>
+          <label>Deployment environment</label>
+          <select id="f-deploy"><option>Cloud API</option><option>On-premise</option><option>Edge device</option><option>Hybrid</option></select>
+          <label>Human review loop</label>
+          <div class="chip-row" id="f-human-chips">
+            <div class="chip" data-val="auto">Fully automated</div>
+            <div class="chip" data-val="lowconf">Review low-confidence</div>
+            <div class="chip" data-val="all">Review all</div>
+          </div>
+          <button class="gen-btn" id="gb4" onclick="formGenerate(4)"><span>✦</span>Generate Deployment Plan</button>
+          <div id="fo-4"></div>
+        </div>
+      </div>
+
+      <div class="form-bottom">
+        <button class="fbtn fbtn-ghost" id="f-prev" onclick="formPrev()" style="visibility:hidden">← Back</button>
+        <span id="f-counter" style="font-family:var(--mono);font-size:11px;color:var(--text3)">Step 1 of 5</span>
+        <button class="fbtn fbtn-primary" id="f-next" onclick="formNext()">Next →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <aside class="right-panel">
+    <div class="rp-section">
+      <div class="rp-label">Domain</div>
+      <div class="rp-val" id="rp-domain"><span class="rp-empty">Not set</span></div>
+    </div>
+    <div class="rp-divider"></div>
+    <div class="rp-section">
+      <div class="rp-label">Target</div>
+      <div class="rp-val" id="rp-target"><span class="rp-empty">Not set</span></div>
+    </div>
+    <div class="rp-divider"></div>
+    <div class="rp-section">
+      <div class="rp-label">Architecture</div>
+      <div class="rp-val" id="rp-arch"><span class="rp-empty">Pending</span></div>
+    </div>
+    <div class="rp-divider"></div>
+    <div class="rp-section">
+      <div class="rp-label">Pipeline</div>
+      <div class="rp-pipeline" id="rp-pipeline">
+        <div class="rp-pbox">Input</div><div class="rp-parrow">→</div>
+        <div class="rp-pbox">Model</div><div class="rp-parrow">→</div>
+        <div class="rp-pbox">Output</div>
+      </div>
+    </div>
+    <div class="rp-divider"></div>
+    <div class="rp-section">
+      <div class="rp-label">Est. Metrics</div>
+      <div id="rp-metrics">
+        <div class="rp-metric"><span class="rp-metric-name">Precision</span><span class="rp-metric-val">—</span></div>
+        <div class="rp-metric"><span class="rp-metric-name">Recall</span><span class="rp-metric-val">—</span></div>
+        <div class="rp-metric"><span class="rp-metric-name">F1</span><span class="rp-metric-val">—</span></div>
+      </div>
+    </div>
+    <div class="rp-divider"></div>
+    <div class="rp-section">
+      <div class="rp-label">Monthly Cost</div>
+      <div class="rp-val" id="rp-cost"><span class="rp-empty">Fill step 5</span></div>
+    </div>
+    <div class="rp-divider"></div>
+    <div class="rp-section">
+      <div class="rp-label">Uploaded Image</div>
+      <div id="rp-img-area"><span class="rp-empty">None</span></div>
+    </div>
+    <div class="rp-divider"></div>
+    <div class="rp-section">
+      <div class="rp-label">Generated</div>
+      <div id="rp-progress" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">
+        <span class="rp-tag tag-pend" id="rpt-0">Spec</span>
+        <span class="rp-tag tag-pend" id="rpt-1">Data</span>
+        <span class="rp-tag tag-pend" id="rpt-2">Arch</span>
+        <span class="rp-tag tag-pend" id="rpt-3">Train</span>
+        <span class="rp-tag tag-pend" id="rpt-4">Deploy</span>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let mode = 'interview';
+let adversarialOn = false;
+let uploadedImageB64 = null;
+let uploadedImageMime = null;
+let chatHistory = []; // {role, content, imageB64?}
+let generatedOutputs = {};
+let chipSelections = {};
+let formStep = 0;
+let isGenerating = false;
+
+const scenarios = {
+  flooding:{industry:'Smart Cities & Traffic',what:'Flooded roadways — standing water pooling from roadside until it covers the ground and blocks vehicle passage',why:'Reduce flood response time from 30 minutes to under 5 minutes, automatically reroute traffic before accidents occur',det:['graded','reasoning','realtime'],edge:'Rain-slicked-but-clear roads, reflections at night, shallow puddles that don\'t block traffic, wet pavement after rain'},
+  traffic_block:{industry:'Smart Cities & Traffic',what:'Traffic lane obstruction — vehicles, debris, construction barriers blocking one or more active lanes',why:'Alert traffic control centers in real time to reroute, reducing congestion and collision risk',det:['graded','reasoning'],edge:'Cones cordoning empty plazas with no traffic to obstruct, vehicles stopped at red lights, delivery trucks briefly double-parked'},
+  road_construction:{industry:'Smart Cities & Traffic',what:'Active road construction work zones — barriers, equipment, and workers physically occupying the roadway',why:'Automatically update navigation systems and alert drivers; track zone durations for billing',det:['classification','reasoning'],edge:'Equipment parked nearby but not in the lane, flaggers at edge, finished zones with residual cones still present'},
+  yield_pedestrian:{industry:'Smart Cities & Traffic',what:'Driver yield-to-pedestrian compliance — vehicles yielding when pedestrians are actively in the crosswalk',why:'Enforce pedestrian safety laws, identify high-risk intersections, reduce pedestrian accidents by 40%',det:['reasoning','realtime'],edge:'Vehicles slowing but not fully stopping, pedestrians on sidewalk adjacent to crosswalk, occlusion by larger vehicles'},
+  ppe_compliance:{industry:'Manufacturing & Industrial',what:'PPE compliance — workers wearing required hard hats, high-vis vests, and gloves in designated hazard zones',why:'Reduce workplace injuries and regulatory fines; enable real-time safety alerts before incidents occur',det:['binary','classification'],edge:'Partial occlusion by machinery, workers in office areas where PPE is not required, different PPE colors across vendors'},
+  defect_detection:{industry:'Manufacturing & Industrial',what:'Product surface defects on conveyor belt — scratches, dents, discoloration, and cracks that fail QC',why:'Reduce defect escape rate from 2% to under 0.1%; improve QC throughput vs manual inspection',det:['graded','classification'],edge:'Shadows and reflections that mimic defects, acceptable minor surface variation across SKUs, motion blur at high line speed'},
+  spill_detection:{industry:'Manufacturing & Industrial',what:'Liquid spills or hazardous material on warehouse or factory floor surfaces',why:'Prevent slip-and-fall incidents; trigger immediate cleanup crew dispatch within 2 minutes',det:['binary','reasoning'],edge:'Recently mopped wet floors, floor marking paint, drain puddles, low-lighting night shifts'},
+  crowd_density:{industry:'Retail & Public Safety',what:'Crowd density and occupancy level monitoring — detecting when areas approach or exceed safe capacity',why:'Comply with safety capacity limits; optimize staffing and checkout flow in real time',det:['graded','realtime'],edge:'Sparse crowds that appear dense due to camera angle, reflective surfaces doubling apparent count, partial views at doorways'},
+  slip_hazard:{industry:'Retail & Public Safety',what:'Slip and trip hazards on retail floors — liquid spills, fallen merchandise, wet floor areas',why:'Prevent customer injuries and liability claims; target under 90 seconds to hazard dispatch',det:['binary','graded'],edge:'Wet floor signs without an actual hazard beneath them, product floor displays, mannequins, promotional mats'},
+  crop_disease:{industry:'Agriculture',what:'Crop disease and pest damage — discoloration, lesions, wilting, and unusual patterns across field rows',why:'Enable early intervention to prevent spread; reduce pesticide use by targeting affected areas only',det:['graded','classification'],edge:'Natural leaf color variation by growth stage, shadows from drone angle, water stress symptoms mimicking disease'},
+  irrigation_leak:{industry:'Agriculture',what:'Irrigation system leaks or failures — unexpected water pooling, or dry patches in otherwise irrigated patterns',why:'Reduce water waste and crop loss from under/over-watering; detect failures within one irrigation cycle',det:['binary','graded'],edge:'Intentional irrigation zones fully saturated, rainfall pooling in low areas, seasonal soil color variation'}
+};
+
+// ── MODE SWITCH ──
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === m));
+  document.getElementById('interview-mode').style.display = m === 'interview' ? 'flex' : 'none';
+  document.getElementById('form-mode').style.display = m === 'form' ? 'flex' : 'none';
+  if (m === 'interview' && chatHistory.length === 0) startInterview();
+}
+
+// ── INTERVIEW ──
+function startInterview() {
+  addAIMessage(`Hey — let's build a vision AI model spec together.\n\nWhat are you trying to detect? Tell me the industry you're in and roughly what the camera should be flagging, and I'll ask the right follow-up questions to get us to a complete spec.\n\nOr if you have a sample frame from your camera feed, attach it and I'll ground everything in your actual footage.`);
+}
+
+function addAIMessage(text, extra) {
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = `<div class="msg-avatar ai">AI</div><div class="msg-bubble">${text.replace(/\n/g,'<br>')}${extra||''}</div>`;
+  document.getElementById('chat-history').appendChild(div);
+  scrollChat();
+}
+
+function addUserMessage(text, imgB64, imgMime) {
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  let imgHtml = '';
+  if (imgB64) imgHtml = `<img src="data:${imgMime};base64,${imgB64}" class="img-preview-thumb">`;
+  div.innerHTML = `<div class="msg-avatar user">👤</div><div class="msg-bubble">${text.replace(/\n/g,'<br>')}${imgHtml}</div>`;
+  document.getElementById('chat-history').appendChild(div);
+  scrollChat();
+}
+
+function addTypingIndicator() {
+  const div = document.createElement('div');
+  div.className = 'msg'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-avatar ai">AI</div><div class="msg-bubble typing"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('chat-history').appendChild(div);
+  scrollChat();
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function scrollChat() {
+  const h = document.getElementById('chat-history');
+  h.scrollTop = h.scrollHeight;
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if ((!text && !uploadedImageB64) || isGenerating) return;
+
+  const imgB64 = uploadedImageB64;
+  const imgMime = uploadedImageMime;
+
+  addUserMessage(text || '(image attached)', imgB64, imgMime);
+
+  // Build content
+  const userContent = [];
+  if (imgB64) userContent.push({ type:'image', source:{ type:'base64', media_type:imgMime, data:imgB64 }});
+  if (text) userContent.push({ type:'text', text });
+
+  chatHistory.push({ role:'user', content: userContent.length === 1 && !imgB64 ? text : userContent });
+
+  input.value = ''; input.style.height = 'auto';
+  uploadedImageB64 = null; uploadedImageMime = null;
+  document.getElementById('send-btn').disabled = true;
+  isGenerating = true;
+  addTypingIndicator();
+
+  const systemPrompt = `You are an expert ML engineer conducting a structured interview to build a complete vision AI model specification. 
+
+Your job: ask focused follow-up questions one or two at a time, extract the key information needed for a spec (domain, detection target, output type, edge cases, data situation, latency needs, false positive tolerance), and once you have enough context, generate a structured spec section.
+
+When you have enough information for a section, output it clearly labeled like:
+SPEC: [section name]
+[content]
+
+When the user uploads an image, analyze it specifically for:
+- What the camera angle and conditions reveal about detection difficulty  
+- Specific ambiguities in THIS footage that the annotation schema must handle
+- What a false positive would look like in this specific scene
+
+${adversarialOn ? `ADVERSARIAL MODE IS ON: After every spec section you generate, also output an adversarial critique labeled:
+ADVERSARIAL:
+[3-5 specific ways this spec could fail — missing edge cases, annotation ambiguities, false positive risks, deployment gaps. Be a skeptical senior ML engineer tearing apart the plan. Be specific and sharp, not generic.]` : ''}
+
+Keep responses conversational and focused. Don't dump everything at once — guide the user through the spec naturally. Max 200 words per response unless generating a full spec section.`;
+
+  try {
+    const messages = chatHistory.map(m => ({ role: m.role, content: m.content }));
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:systemPrompt, messages })
+    });
+    const data = await res.json();
+    const reply = data.content?.map(b=>b.text||'').join('') || 'No response.';
+    chatHistory.push({ role:'assistant', content:reply });
+
+    removeTypingIndicator();
+    renderAIReply(reply);
+    updateRightPanel();
+  } catch(e) {
+    removeTypingIndicator();
+    addAIMessage('Connection error — check your API access and try again.');
+  }
+
+  document.getElementById('send-btn').disabled = false;
+  isGenerating = false;
+}
+
+function renderAIReply(reply) {
+  // Parse out SPEC blocks and ADVERSARIAL blocks
+  const specRegex = /SPEC:\s*([^\n]+)\n([\s\S]*?)(?=ADVERSARIAL:|SPEC:|$)/gi;
+  const advRegex = /ADVERSARIAL:\n([\s\S]*?)(?=SPEC:|$)/gi;
+
+  let clean = reply;
+  let specHtml = '';
+  let advHtml = '';
+
+  let specMatch;
+  while ((specMatch = specRegex.exec(reply)) !== null) {
+    const title = specMatch[1].trim();
+    const content = specMatch[2].trim();
+    specHtml += `<div class="spec-card"><div class="spec-card-label">✦ ${title}</div><div class="spec-card-content">${content.replace(/\n/g,'<br>')}</div></div>`;
+    // Store it
+    const idx = ['Problem Specification','Data Strategy','Architecture','Training','Deployment'].findIndex(t => title.toLowerCase().includes(t.toLowerCase().split(' ')[0]));
+    if (idx >= 0) { generatedOutputs[idx] = content; updateProgressTags(); }
+    clean = clean.replace(specMatch[0], '');
+  }
+
+  let advMatch;
+  while ((advMatch = advRegex.exec(reply)) !== null) {
+    const content = advMatch[1].trim();
+    advHtml += `<div class="adversarial-block"><div class="adv-header"><span class="adv-icon">⚔️</span><span class="adv-label">Adversarial Review</span></div><div class="adv-content">${content.replace(/\n/g,'<br>')}</div></div>`;
+    clean = clean.replace(advMatch[0], '');
+  }
+
+  clean = clean.replace(/SPEC:[\s\S]*?(?=ADVERSARIAL:|$)/g,'').replace(/ADVERSARIAL:[\s\S]*/g,'').trim();
+
+  const mainText = clean ? `<div class="msg-bubble">${clean.replace(/\n/g,'<br>')}${specHtml}${advHtml}</div>` : `<div class="msg-bubble">${specHtml}${advHtml}</div>`;
+
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = `<div class="msg-avatar ai">AI</div>${mainText}`;
+  document.getElementById('chat-history').appendChild(div);
+  scrollChat();
+}
+
+function toggleAdversarial() {
+  adversarialOn = !adversarialOn;
+  const box = document.getElementById('adv-box');
+  const label = document.getElementById('adv-label');
+  box.classList.toggle('on', adversarialOn);
+  label.textContent = adversarialOn ? 'Adversarial ON' : 'Adversarial off';
+  showToast(adversarialOn ? '⚔️ Adversarial mode on — Claude will tear apart every spec' : 'Adversarial mode off', adversarialOn ? 'err' : '');
+}
+
+// ── IMAGE UPLOAD ──
+function handleImageUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const b64 = ev.target.result.split(',')[1];
+    uploadedImageB64 = b64;
+    uploadedImageMime = file.type;
+    updateRpImage(b64, file.type);
+    showToast('Image attached — send a message to analyze it', 'ok');
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleFormImage(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const b64 = ev.target.result.split(',')[1];
+    uploadedImageB64 = b64;
+    uploadedImageMime = file.type;
+    const preview = document.getElementById('img-preview-form');
+    preview.src = ev.target.result; preview.style.display = 'block';
+    updateRpImage(b64, file.type);
+  };
+  reader.readAsDataURL(file);
+}
+
+function dropImage(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0]; if (!file || !file.type.startsWith('image/')) return;
+  const fakeEvent = { target: { files: [file] } };
+  handleFormImage(fakeEvent);
+}
+
+function updateRpImage(b64, mime) {
+  document.getElementById('rp-img-area').innerHTML = `<div class="img-badge"><img class="img-badge-thumb" src="data:${mime};base64,${b64}"><div class="img-badge-text">Image loaded<br>Will ground spec analysis</div></div>`;
+}
+
+// ── FORM MODE ──
+document.querySelectorAll('.chip-row').forEach(row => {
+  row.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      if (!chipSelections[row.id]) chipSelections[row.id] = new Set();
+      if (chip.classList.contains('selected')) chipSelections[row.id].add(chip.dataset.val);
+      else chipSelections[row.id].delete(chip.dataset.val);
+    });
+  });
+});
+
+function formGoTo(s) {
+  formStep = s;
+  document.querySelectorAll('.step-section').forEach((el,i) => el.classList.toggle('active', i===s));
+  document.querySelectorAll('.nav-item').forEach((el,i) => {
+    el.classList.remove('active','done');
+    if (i < s) { el.classList.add('done'); document.getElementById(`nc${i}`).textContent='✓'; }
+    else { document.getElementById(`nc${i}`).textContent=''; }
+    if (i === s) el.classList.add('active');
+  });
+  document.getElementById('f-counter').textContent = `Step ${s+1} of 5`;
+  document.getElementById('f-prev').style.visibility = s===0?'hidden':'visible';
+  document.getElementById('f-next').textContent = s===4 ? 'Export PDF ↗' : 'Next →';
+  if (s === 4) calcCost();
+  updateRightPanel();
+}
+function formNext() { if (formStep < 4) formGoTo(formStep+1); else exportPdf(); }
+function formPrev() { if (formStep > 0) formGoTo(formStep-1); }
+
+async function formGenerate(step) {
+  const btn = document.getElementById(`gb${step}`);
+  const out = document.getElementById(`fo-${step}`);
+  btn.disabled = true; btn.innerHTML = '<span>⟳</span> Generating…';
+  out.innerHTML = `<div class="ai-out"><div class="ai-out-label">AI OUTPUT</div><div class="ai-out-content loading">Analyzing…</div></div>`;
+
+  const industry = document.getElementById('f-industry')?.value || 'unspecified';
+  const what = document.getElementById('f-what')?.value || '';
+  const why = document.getElementById('f-why')?.value || '';
+  const detTypes = [...(chipSelections['f-det-chips']||[])].join(', ');
+  const data = document.getElementById('f-data')?.value || '';
+  const src = [...(chipSelections['f-src-chips']||[])].join(', ');
+  const edge = document.getElementById('f-edge')?.value || '';
+  const latency = document.getElementById('f-latency')?.value || '';
+  const exp = [...(chipSelections['f-exp-chips']||[])].join(', ');
+  const compute = document.getElementById('f-compute')?.value || '';
+  const fp = document.getElementById('f-fp')?.value || '';
+  const met = [...(chipSelections['f-met-chips']||[])].join(', ');
+  const deploy = document.getElementById('f-deploy')?.value || '';
+  const human = [...(chipSelections['f-human-chips']||[])].join(', ');
+  const imgs = document.getElementById('c-imgs')?.value || '10000';
+
+  const prompts = [
+    `Vision AI for ${industry}. Detect: "${what}". Impact: "${why}". Types: ${detTypes||'unspecified'}.\n\nWrite a precise problem spec:\n1. Exact positive/negative case definitions\n2. Key annotation ambiguities to resolve first\n3. Recommended output format with label names\n4. Top 2 false-positive risks`,
+    `${industry} model detecting "${what}". Data: ${data}. Sources: ${src}. Edge cases: "${edge}".\n\nData strategy:\n1. Minimum labeled data required and reasoning\n2. Exact annotation schema with label definitions\n3. Class balancing approach\n4. Edge case sourcing plan\n5. Train/val/test split`,
+    `${industry} model for "${what}". Latency: ${latency}. Explainability: ${exp||'unspecified'}. Compute: ${compute}.\n\nArchitecture recommendation:\n1. Best model type with specific model names\n2. Two-stage screening decision and rationale\n3. VLM prompt engineering approach if applicable\n4. Key tradeoffs\n5. Inference cost estimate per image`,
+    `"${what}" in ${industry}. FP tolerance: ${fp}. Metric: ${met||'F1'}.\n\nTraining plan:\n1. Fine-tuning method (SFT/LoRA/prompt-only)\n2. Data techniques (class balance, cross-check rephrasing)\n3. Eval benchmark with correct rejection cases\n4. Iteration measurement approach\n5. Target accuracy range`,
+    `"${what}" in ${industry}. Volume: ${imgs}/day. Env: ${deploy}. Human review: ${human||'unspecified'}.\n\nDeployment plan:\n1. Inference pipeline architecture\n2. Production monitoring metrics\n3. Drift detection approach\n4. Retraining trigger criteria\n5. Alert and escalation logic\n6. Cost optimization at this volume`
+  ];
+
+  // Build messages — include image if available
+  const msgContent = [];
+  if (uploadedImageB64 && step === 0) {
+    msgContent.push({ type:'image', source:{ type:'base64', media_type:uploadedImageMime, data:uploadedImageB64 }});
+    msgContent.push({ type:'text', text: prompts[step] + '\n\nAn image from the camera feed is attached. Reference specific elements you see in it when defining the detection criteria and edge cases.'});
+  } else {
+    msgContent.push({ type:'text', text: prompts[step] });
+  }
+
+  const advSuffix = adversarialOn ? `\n\nAfter your recommendation, add a section labeled ADVERSARIAL REVIEW: with 3-5 specific ways this plan could fail — be a skeptical senior ML engineer.` : '';
+  if (msgContent[msgContent.length-1].type === 'text') msgContent[msgContent.length-1].text += advSuffix;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:1000,
+        system:`You are an expert ML engineer. Give specific, technical, actionable advice. Plain text with numbered lists. No markdown symbols. Max 380 words per section.`,
+        messages:[{ role:'user', content:msgContent }]
+      })
+    });
+    const d = await res.json();
+    const text = d.content?.map(b=>b.text||'').join('') || 'No response.';
+    generatedOutputs[step] = text;
+    updateProgressTags(); updateRightPanel();
+
+    // Render with adversarial split
+    let mainContent = text, advContent = '';
+    const advIdx = text.indexOf('ADVERSARIAL REVIEW:');
+    if (advIdx > -1) {
+      mainContent = text.substring(0, advIdx).trim();
+      advContent = text.substring(advIdx + 19).trim();
+    }
+    out.innerHTML = `<div class="ai-out"><div class="ai-out-label">✦ Recommendation</div><div class="ai-out-content">${mainContent}</div></div>` +
+      (advContent ? `<div class="adversarial-block"><div class="adv-header"><span class="adv-icon">⚔️</span><span class="adv-label">Adversarial Review</span></div><div class="adv-content">${advContent}</div></div>` : '');
+    showToast('Generated', 'ok');
+  } catch(e) {
+    out.innerHTML = `<div class="ai-out"><div class="ai-out-label">Error</div><div class="ai-out-content loading">Failed. Check connection.</div></div>`;
+  }
+  btn.disabled = false; btn.innerHTML = '<span>✦</span> Regenerate';
+}
+
+// ── COST CALC ──
+const costTable = { vlm_large:{base:.0018,gpu:'A100 / H100'}, vlm_small:{base:.0006,gpu:'A10G / L4'}, detector:{base:.00008,gpu:'T4 / V100'}, classifier:{base:.000015,gpu:'T4 / CPU'}, two_stage:{base:.0009,gpu:'A10G + H100'} };
+const provMult = { aws:1.0, gcp:.95, azure:1.05, self:.35 };
+function calcCost() {
+  const imgs = parseFloat(document.getElementById('c-imgs')?.value)||0;
+  const model = document.getElementById('c-model')?.value||'vlm_large';
+  const prov = document.getElementById('c-prov')?.value||'aws';
+  const ct = costTable[model]; const mult = provMult[prov];
+  const perImg = ct.base * mult;
+  const daily = perImg * imgs;
+  const stor = imgs * 0.00005 * 0.023 * 30;
+  const monthly = (daily * 30) + stor;
+  const fmt = n => n < .001 ? `$${n.toFixed(6)}` : n < .1 ? `$${n.toFixed(4)}` : n < 10 ? `$${n.toFixed(3)}` : `$${Math.round(n).toLocaleString()}`;
+  document.getElementById('c-per').textContent = fmt(perImg);
+  document.getElementById('c-day').textContent = fmt(daily);
+  document.getElementById('c-mo').textContent = fmt(monthly);
+  document.getElementById('c-yr').textContent = fmt(monthly*12);
+  document.getElementById('c-comp').textContent = fmt(daily*30)+'/mo';
+  document.getElementById('c-stor').textContent = fmt(stor)+'/mo';
+  document.getElementById('c-gpu').textContent = ct.gpu;
+  document.getElementById('rp-cost').textContent = fmt(monthly)+'/mo';
+}
+
+// ── RIGHT PANEL ──
+function updateRightPanel() {
+  const domain = document.getElementById('f-industry')?.value;
+  const target = document.getElementById('f-what')?.value;
+  if (domain) document.getElementById('rp-domain').textContent = domain;
+  if (target?.trim()) { const t=target.trim(); document.getElementById('rp-target').textContent = t.length>70?t.substring(0,70)+'…':t; }
+  if (generatedOutputs[2]) {
+    document.getElementById('rp-arch').innerHTML = '<span class="rp-tag tag-done">VLM + Detector</span>';
+    document.getElementById('rp-pipeline').innerHTML = '<div class="rp-pbox hi">Stage 1</div><div class="rp-parrow">→</div><div class="rp-pbox hi">Stage 2</div><div class="rp-parrow">→</div><div class="rp-pbox">Alert</div>';
+    document.getElementById('rp-metrics').innerHTML = '<div class="rp-metric"><span class="rp-metric-name">Precision</span><span class="rp-metric-val">~0.90</span></div><div class="rp-metric"><span class="rp-metric-name">Recall</span><span class="rp-metric-val">~0.95</span></div><div class="rp-metric"><span class="rp-metric-name">F1</span><span class="rp-metric-val">~0.92</span></div>';
+  }
+}
+function updateProgressTags() {
+  const labels = ['Spec','Data','Arch','Train','Deploy'];
+  labels.forEach((l,i) => {
+    const el = document.getElementById(`rpt-${i}`);
+    if (generatedOutputs[i]) { el.className='rp-tag tag-done'; el.textContent='✓ '+l; }
+    else { el.className='rp-tag tag-pend'; el.textContent=l; }
+  });
+}
+
+// ── LOAD SCENARIO ──
+function loadScenario(key) {
+  const s = scenarios[key]; if (!s) return;
+  document.getElementById('f-industry').value = s.industry;
+  document.getElementById('f-what').value = s.what;
+  document.getElementById('f-why').value = s.why;
+  document.getElementById('f-edge').value = s.edge || '';
+  document.querySelectorAll('#f-det-chips .chip').forEach(c => c.classList.toggle('selected', s.det.includes(c.dataset.val)));
+  chipSelections['f-det-chips'] = new Set(s.det);
+  if (mode === 'form') { formGoTo(0); }
+  else {
+    setMode('form');
+    document.querySelector('.mode-btn').classList.remove('active');
+    document.querySelectorAll('.mode-btn')[1].classList.add('active');
+    formGoTo(0);
+  }
+  updateRightPanel();
+  showToast(`Loaded: ${key.replace(/_/g,' ')}`, 'ok');
+}
+
+// ── EXPORTS ──
+function exportTxt() {
+  if (!Object.keys(generatedOutputs).length) { showToast('Generate at least one section first', 'err'); return; }
+  const titles = ['Problem Specification','Data Strategy','Model Architecture','Training Plan','Deployment Plan'];
+  const domain = document.getElementById('f-industry')?.value || 'Unknown';
+  const what = document.getElementById('f-what')?.value || '';
+  let out = `MODEL SPEC — ${domain}\n${'='.repeat(60)}\nDetection Target: ${what}\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
+  Object.entries(generatedOutputs).sort(([a],[b])=>a-b).forEach(([k,v]) => { out += `${'='.repeat(60)}\n${titles[k]}\n${'='.repeat(60)}\n\n${v}\n\n`; });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out],{type:'text/plain'})); a.download='model-spec.txt'; a.click();
+  showToast('TXT exported', 'ok');
+}
+
+async function exportPdf() {
+  if (!Object.keys(generatedOutputs).length) { showToast('Generate at least one section first', 'err'); return; }
+  showToast('Generating PDF…', '');
+  try {
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), m = 18;
+    let y = m;
+    const checkPage = n => { if (y+n > H-m) { doc.addPage(); y = m; } };
+
+    // Cover
+    doc.setFillColor(8,10,15); doc.rect(0,0,W,H,'F');
+    doc.setFillColor(15,17,23); doc.rect(m,20,W-m*2,60,'F');
+    doc.setDrawColor(45,53,85); doc.setLineWidth(.3); doc.rect(m,20,W-m*2,60,'S');
+    doc.setFillColor(79,142,247); doc.rect(m,20,3,60,'F');
+    doc.setTextColor(79,142,247); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('MODEL / BUILDER', m+8, 32);
+    doc.setTextColor(107,116,148); doc.setFont('helvetica','normal');
+    doc.text('Anthos Intelligence', m+8, 38);
+    doc.setTextColor(232,236,244); doc.setFontSize(20);
+    const domain = document.getElementById('f-industry')?.value || 'Vision AI Project';
+    doc.text(doc.splitTextToSize(domain, W-m*2-12), m+8, 45);
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(107,116,148);
+    const what = document.getElementById('f-what')?.value || '';
+    doc.text(doc.splitTextToSize(what, W-m*2-12), m+8, 60);
+    doc.setFontSize(8); doc.text(new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), m+8, 76);
+    const mo = document.getElementById('c-mo')?.textContent;
+    if (mo && mo !== '—') {
+      doc.setFillColor(30,35,50); doc.rect(m,94,W-m*2,22,'F');
+      doc.setDrawColor(245,200,66); doc.setLineWidth(.3); doc.rect(m,94,W-m*2,22,'S');
+      doc.setTextColor(107,116,148); doc.setFontSize(8); doc.text('EST. MONTHLY COST', m+6,104);
+      doc.setTextColor(245,200,66); doc.setFontSize(18); doc.setFont('helvetica','bold');
+      doc.text(mo, m+6,113);
+    }
+
+    const titles = ['Problem Specification','Data Strategy','Model Architecture','Training Plan','Deployment Plan'];
+    Object.keys(generatedOutputs).sort((a,b)=>a-b).forEach(k => {
+      doc.addPage();
+      doc.setFillColor(8,10,15); doc.rect(0,0,W,H,'F');
+      doc.setFillColor(15,17,23); doc.rect(0,0,W,22,'F');
+      doc.setFillColor(79,142,247); doc.rect(0,0,3,22,'F');
+      doc.setTextColor(79,142,247); doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.text(`${String(parseInt(k)+1).padStart(2,'0')}  ${titles[k].toUpperCase()}`, 8, 14);
+      y = 32;
+      doc.setTextColor(232,236,244); doc.setFontSize(10); doc.setFont('helvetica','normal');
+      const lines = doc.splitTextToSize(generatedOutputs[k], W-m*2);
+      for (const line of lines) { checkPage(6); doc.text(line, m, y); y += 5.5; }
+    });
+
+    doc.save('model-spec.pdf');
+    showToast('PDF exported', 'ok');
+  } catch(e) { showToast('PDF failed', 'err'); console.error(e); }
+}
+
+// ── TOAST ──
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast${type?` ${type}`:''}`;
+  void t.offsetWidth; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── INIT ──
+calcCost();
+startInterview();
+</script>
+</body>
+</html>
