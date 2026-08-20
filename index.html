@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap">
 <style>
-/* ── TOKENS (dark-first) ── */
+/* ── TOKENS (dark — fixed) ── */
 :root {
   --bg:     #050a14;
   --bg2:    #070e1a;
@@ -27,50 +27,7 @@
   --mono:   'IBM Plex Mono', monospace;
   --sans:   'IBM Plex Sans', sans-serif;
   --disp:   'Barlow Condensed', sans-serif;
-}
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg:     #edf3fb;
-    --bg2:    #e3eef8;
-    --surf:   #f8fbff;
-    --surf2:  #eaf3ff;
-    --bdr:    #bed2e8;
-    --bdr2:   #8db2cc;
-    --ink:    #091828;
-    --ink2:   #38587a;
-    --ink3:   #678099;
-    --blue:   #1659cc;
-    --blue-d: rgba(22,89,204,.08);
-    --blue-m: rgba(22,89,204,.18);
-    --teal:   #0e8c5e;
-    --teal-d: rgba(14,140,94,.08);
-    --yell:   #a87100;
-    --yell-d: rgba(168,113,0,.09);
-    --red:    #cb2f18;
-    --dot:    rgba(22,89,204,.09);
-    --nav-bg: rgba(237,243,251,.93);
-  }
-}
-:root[data-theme="light"] {
-  --bg:     #edf3fb;
-  --bg2:    #e3eef8;
-  --surf:   #f8fbff;
-  --surf2:  #eaf3ff;
-  --bdr:    #bed2e8;
-  --bdr2:   #8db2cc;
-  --ink:    #091828;
-  --ink2:   #38587a;
-  --ink3:   #678099;
-  --blue:   #1659cc;
-  --blue-d: rgba(22,89,204,.08);
-  --blue-m: rgba(22,89,204,.18);
-  --teal:   #0e8c5e;
-  --teal-d: rgba(14,140,94,.08);
-  --yell:   #a87100;
-  --yell-d: rgba(168,113,0,.09);
-  --red:    #cb2f18;
-  --dot:    rgba(22,89,204,.09);
-  --nav-bg: rgba(237,243,251,.93);
+  color-scheme: dark;
 }
 
 /* ── RESET ── */
